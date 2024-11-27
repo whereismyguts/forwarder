@@ -66,9 +66,10 @@ async def reply_to_user(message: types.Message):
     except Exception as e:
         logging.error(f"Error replying to user: {e}")
 
+from aiogram.filters import Command
 
-@router.message(commands=["start"])
-async def start(message: Message):
+@router.message(Command("start"))
+async def start_command(message: Message):
     await message.answer("Добро пожаловать в бот-канал MTL Village! Здесь мы с удовольствием ответим на все ваши вопросы")
 
 async def main():
