@@ -4,32 +4,27 @@ import redis.asyncio as redis
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import Message
 from aiogram.dispatcher.router import Router
-from aiogram.types.error_event import ErrorEvent
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.fsm.storage.redis import RedisStorage, Redis
+from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.filters import Command
 
 import os
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = os.getenv("ADMIN_ID")
 
-# Initialize the bot, dispatcher, and router
 bot = Bot(token=BOT_TOKEN)
 router = Router()
 
-# Redis configuration
 redis_client = None
 
 
 async def init_redis():
     global redis_client
-    # redis = aioredis.from_url("redis://redis:6379/0", encoding="utf-8", decode_responses=True)
     # redis_client = redis.from_url("redis://localhost:6379/0", encoding="utf-8", decode_responses=True)
     redis_client = redis.from_url("redis://redis:6379/0", encoding="utf-8", decode_responses=True)
 
 
-# Forward all user messages to the admin
-@router.message(lambda msg: msg.chat.id != int(ADMIN_ID))
+@router.message(lambda msg: msg.chat.id != int(ADMIN_ID) and not msg.text.startswith("/start"))
 async def forward_to_admin(message: types.Message):
     try:
         logging.info(f"Forwarding message from {message.chat.id} to admin {ADMIN_ID}")
@@ -38,13 +33,11 @@ async def forward_to_admin(message: types.Message):
             from_chat_id=message.chat.id,
             message_id=message.message_id,
         )
-        # Store message mapping in Redis
         await redis_client.set(f"message:{forwarded_message.message_id}", message.chat.id)
     except Exception as e:
         logging.error(f"Error forwarding message: {e}")
 
 
-# Handle admin replies and send them to the original user
 @router.message(lambda msg: msg.chat.id == int(ADMIN_ID) and msg.reply_to_message)
 async def reply_to_user(message: types.Message):
     try:
@@ -66,23 +59,17 @@ async def reply_to_user(message: types.Message):
     except Exception as e:
         logging.error(f"Error replying to user: {e}")
 
-from aiogram.filters import Command
 
 @router.message(Command("start"))
 async def start_command(message: Message):
     await message.answer("Добро пожаловать в бот-канал MTL Village! Здесь мы с удовольствием ответим на все ваши вопросы")
 
+
 async def main():
-    # Initialize Redis
     await init_redis()
-
-    # Create Dispatcher with Redis-based storage
     storage = RedisStorage(redis_client)
-
     dp = Dispatcher(storage=storage)
     dp.include_router(router)
-
-    # Start polling
     await dp.start_polling(bot)
 
 
