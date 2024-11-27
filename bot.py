@@ -67,6 +67,10 @@ async def reply_to_user(message: types.Message):
         logging.error(f"Error replying to user: {e}")
 
 
+@router.message(commands=["start"])
+async def start(message: Message):
+    await message.answer("Добро пожаловать в бот-канал MTL Village! Здесь мы с удовольствием ответим на все ваши вопросы")
+
 async def main():
     # Initialize Redis
     await init_redis()
