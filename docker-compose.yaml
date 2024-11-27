@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN:-}
+      ADMIN_ID: ${ADMIN_ID:-}
+    depends_on:
+      - redis
+    command: ["python", "bot.py"]
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
