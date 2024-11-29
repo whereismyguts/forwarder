@@ -1,6 +1,5 @@
 # Prerequisites
-linux system
-git, docker, compose
+linux system, git, docker, compose
 
 
 # Install
